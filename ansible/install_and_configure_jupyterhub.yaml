@@ -1,0 +1,24 @@
+---
+- name: install jupyterhub
+  hosts: jupyterhub
+  remote_user: root
+
+  tasks:
+  - name: install JupyterHub
+    shell: |
+      curl -L https://tljh.jupyter.org/bootstrap.py \
+        | sudo python3 - \
+        --admin {{ admin_user_id }}
+
+  - name: configure https for domain
+    shell: |
+      tljh-config set https.enabled true \
+        && tljh-config set https.letsencrypt.email {{ admin_email }} \
+        && tljh-config add-item https.letsencrypt.domains {{ domain }} \
+        && tljh-config reload proxy
+
+  - name: let users sign up with a username and password
+    shell: |
+      tljh-config set auth.type nativeauthenticator.NativeAuthenticator \
+        && tljh-config set auth.NativeAuthenticator.open_signup true \
+        && tljh-config reload
